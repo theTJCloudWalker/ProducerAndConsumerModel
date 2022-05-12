@@ -1,0 +1,4 @@
+﻿  main.cpp
+D:\Files\code\C&C++\vs2022\ProducerAndConsumer\main.cpp(132,39): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+D:\Files\code\C&C++\vs2022\ProducerAndConsumer\main.cpp(183,36): warning C4267: “初始化”: 从“size_t”转换到“int”，可能丢失数据
+  ProducerAndConsumer.vcxproj -> D:\Files\code\C&C++\vs2022\ProducerAndConsumer\x64\Debug\ProducerAndConsumer.exe
