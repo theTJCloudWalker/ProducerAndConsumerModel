@@ -40,7 +40,7 @@ int* buffer;
 int in = 0;
 int out = 0;
 
-vector<int>products;
+vector<int>products;//存储生产
 vector<int>goods;
 
 //semaphore empty=0;
@@ -51,8 +51,8 @@ semaphore full = 0;
 
 
 std::mutex buffermtx;
-std::mutex pmtx;
-std::mutex cmtx;
+std::mutex pmtx;//每次只有一个生产者
+std::mutex cmtx;//每次只要
 
 void setColor(int color) {
     switch (color) {
@@ -244,48 +244,38 @@ void randomStop() {
 
 void Produce() {
     std::unique_lock<std::mutex> lock(buffermtx);
-    PressToContinue();
-    const int x = RandNumber(empty);
-    if (x > empty) {
-        cout << empty;
-        Sleep(5000);
-        exit(1);
+    if (empty > 0) {
+        PressToContinue();
+        const int x = RandNumber(empty);
+       
+        int start = in;
+        //std::uniform_int_distribution<unsigned int> x(1, empty);
+        empty -= x;
+        cct_cls();
+        cct_gotoxy(0, 1);
+        setColor(WHITE);
+        cout << "Main Thread id : " << Main;
+        cct_gotoxy(0, 2);
+        cout << "Operating Thread : ";
+        setColor(GREEN);
+        //cout << "Producer" << std::this_thread::get_id() << "\n";
+        cout << std::this_thread::get_id() << "\n";
+
+        products.clear();
+        for (int i = 0; i < x; i++) {
+            buffer[in] = RandNumber();
+            products.push_back(buffer[in]);
+            in = (in + 1) % CAPACITY;
+        }
+        full += x;
+        //cout << x << " " << empty << " " << full <<" " <<in<<" "<<out<< "\n";
+        //cout << "Producer" << std::this_thread::get_id() << "从" << start << "处开始生产" << x << "个商品" << endl;
+        cout << "[Producer][" << std::this_thread::get_id() << "]";
+        setColor(WHITE);
+       
+        cout << "从" << start << "处开始生产了" << x << "个商品。" << endl;
+        OutputBuffer(start, 1);
     }
-    int start = in;
-    //std::uniform_int_distribution<unsigned int> x(1, empty);
-    empty -= x;
-    cct_cls();
-    cct_gotoxy(0, 1);
-    setColor(WHITE);
-    cout << "Main Thread id : " << Main;
-    cct_gotoxy(0, 2);
-    cout << "Operating Thread : ";
-    setColor(GREEN);
-    //cout << "Producer" << std::this_thread::get_id() << "\n";
-    cout << std::this_thread::get_id() << "\n";
-    
-    products.clear();
-    for (int i = 0; i < x; i++) {
-        buffer[in] = RandNumber();
-        products.push_back(buffer[in]);
-        in = (in + 1) % CAPACITY;
-    }
-    full += x;
-    //cout << x << " " << empty << " " << full <<" " <<in<<" "<<out<< "\n";
-    //cout << "Producer" << std::this_thread::get_id() << "从" << start << "处开始生产" << x << "个商品" << endl;
-    cout << "[Producer][" << std::this_thread::get_id() << "]";
-    setColor(WHITE);
-    if (x > 20) {
-        cct_gotoxy(0, 10);
-        cout << "x:" << x << "\n";
-        cout << "start:" << start << "\n";
-        cout << "out:" << out << "\n";
-        cout << "empty:" << empty << "\n";
-        cout << "full:" << empty << "\n";
-        Sleep(50000);
-    }
-    cout << "从" << start << "处开始生产了" << x << "个商品。" << endl;
-    OutputBuffer(start,1);
 }
 
 void Producer() {
@@ -302,45 +292,35 @@ void Producer() {
 
 void Consume() {
     std::unique_lock<std::mutex> lock(buffermtx);
-    PressToContinue();
-    const int x = RandNumber(full);
-    if (x > full) {
-        cout << full;
-        Sleep(5000);
-        exit(1);
+    if (full > 0) {
+        PressToContinue();
+        const int x = RandNumber(full);
+        
+        int start = out;
+        full = full - x;
+        cct_cls();
+        cct_gotoxy(0, 1);
+        setColor(WHITE);
+        cout << "Main Thread id : " << Main;
+        cct_gotoxy(0, 2);
+        cout << "Operating Thread : ";
+        setColor(RED);
+        cout << std::this_thread::get_id() << "\n";
+        //cout << "Consumer" << std::this_thread::get_id() << "\n";
+        goods.clear();
+        for (int i = 0; i < x; i++) {
+            goods.push_back(buffer[out]);
+            buffer[out] = 0;
+            out = (out + 1) % CAPACITY;
+        }
+        empty = empty + x;
+        cout << "[Consumer][" << std::this_thread::get_id() << "]";
+        setColor(WHITE);
+       
+        cout << "从" << start << "处开始消费了" << x << "个商品。" << endl;
+        //cout << x << " " << empty << " " << full << " " << in << " " << out << "\n";
+        OutputBuffer(start, 0);
     }
-    int start = out;
-    full =full - x;
-    cct_cls();
-    cct_gotoxy(0, 1);
-    setColor(WHITE);
-    cout << "Main Thread id : " << Main;
-    cct_gotoxy(0, 2);
-    cout << "Operating Thread : ";
-    setColor(RED);
-    cout<< std::this_thread::get_id()<<"\n";
-    //cout << "Consumer" << std::this_thread::get_id() << "\n";
-    goods.clear();
-    for (int i = 0; i < x; i++) {
-        goods.push_back(buffer[out]);
-        buffer[out] = 0;
-        out = (out + 1) % CAPACITY;
-    }
-    empty = empty+ x;
-    cout << "[Consumer][" << std::this_thread::get_id() << "]";
-    setColor(WHITE);
-    if (x > 20) {
-        cct_gotoxy(0, 10);
-        cout << "x:" << x<<"\n";
-        cout << "start:"  <<start<<"\n";
-        cout << "out:"  <<out << "\n";
-        cout << "empty:" << empty << "\n";
-        cout << "full:" << empty << "\n";
-        Sleep(50000);
-    }
-    cout<< "从" << start << "处开始消费了" << x << "个商品。" << endl;
-    //cout << x << " " << empty << " " << full << " " << in << " " << out << "\n";
-    OutputBuffer(start,0);
 }
 
 void Consumer() {
@@ -357,7 +337,7 @@ void Consumer() {
 }
 
 int main(int argc, char* argv[]) {
-    /*Main = std::this_thread::get_id();
+    Main = std::this_thread::get_id();
     cout << "main thread id:" << Main << endl;
 
     buffer = new int[CAPACITY];
@@ -374,15 +354,7 @@ int main(int argc, char* argv[]) {
     for (auto& i : th) {
         i.join();
     }
-    delete[]buffer;*/
+    delete[]buffer;
 
-    for (int i = 1; i < 20; i++) {
-
-        for (int j = 1; j < 10000; j++) {
-            int x = RandNumber(i-1);
-            if (i < x)
-                cout << i << " " << x << "\n";
-        }
-    }
     return 0;
 }
